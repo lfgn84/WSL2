@@ -9,7 +9,11 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 @RestController
 @RequestMapping("/api/mails")
@@ -30,6 +34,7 @@ class Controller {
         log.debug("All mails are called");
         return repository.findAll();
 
+
     }
 
     @GetMapping(value = "/{id}")
@@ -38,7 +43,6 @@ class Controller {
 
         return mailOptional.map(mail -> new ResponseEntity<>(mail, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
-
     }
 
     @PostMapping
@@ -53,7 +57,7 @@ class Controller {
 
     @DeleteMapping("/{id}")
     ResponseEntity<?> deleteMail(@PathVariable Long id) {
-        if (repository.existsById(id)) {
+        if (repository.existsById(id) && ( repository.getOne(id).getSent() == null )) {
             log.info("Mail deleted");
             repository.deleteById(id);
             return new ResponseEntity<>(HttpStatus.OK);
@@ -62,12 +66,71 @@ class Controller {
     }
 
     @PostMapping("/{id}")
-    public void sendOneMail(@PathVariable Long id){
+    ResponseEntity<Mail> sendMail (@PathVariable Long id ){
         int i = id.intValue();
-        sendEmail(repository.getOne(id));
+
+        if(repository.getOne(id).getSent() == null)
+            sendEmail(repository.getOne(id));
+        else
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
         log.info("Mail with id = "+ id +" sent to e-mail adress = " + repository.getOne(id).getTo());
+        return repository.findById(id)
+                .map(mail -> {
+                    mail.setSent(new Date());
+
+                    repository.save(mail);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setLocation(linkTo(Controller.class).slash(mail.getId()).toUri());
+                    return new ResponseEntity<>(mail, headers, HttpStatus.OK);
+                })
+                .orElseGet(() ->
+                        new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @PutMapping("/{id}")
+    ResponseEntity<Mail> replaceMail(@RequestBody Mail newMail, @PathVariable Long id) {
+        if(repository.getOne(id).getSent() == null){
+        return repository.findById(id)
+                .map(mail -> {
+                    mail = newMail;
+                    repository.save(mail);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setLocation(linkTo(Controller.class).slash(mail.getId()).toUri());
+                    return new ResponseEntity<>(mail, headers, HttpStatus.OK);
+                })
+                .orElseGet(() ->
+                        new ResponseEntity<>(HttpStatus.NOT_FOUND));
+                }
+        else{
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PatchMapping("/{id}")
+    ResponseEntity<Mail> modifyMail(@RequestBody Mail newMail, @PathVariable Long id) {
+        if(repository.getOne(id).getSent() == null){
+        return repository.findById(id)
+                .map(mail -> {
+                    if (newMail.getTo() != null)
+                        mail.setTo(newMail.getTo());
+                    if(newMail.getSubject() != null)
+                        mail.setSubject(newMail.getSubject());
+                    if(newMail.getText() != null)
+                        mail.setText(newMail.getText());
+
+                    repository.save(mail);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setLocation(linkTo(Controller.class).slash(mail.getId()).toUri());
+                    return new ResponseEntity<>(mail, headers, HttpStatus.OK);
+                    }
+                 )
+                .orElseGet(() ->
+                        new ResponseEntity<>(HttpStatus.NOT_FOUND));}
+        else{
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
 
 
     @Autowired
