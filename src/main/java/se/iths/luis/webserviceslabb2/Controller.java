@@ -2,6 +2,8 @@ package se.iths.luis.webserviceslabb2;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
@@ -21,29 +22,39 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 class Controller {
 
     final MailRepository repository;
+    private final MailModelAssembler assembler;
 
     //  Mail mail1 = new Mail(1,"lfgn84@gmail.com","First mail", "This is the firs e-mail.");
 
-    public Controller(MailRepository repository) {
+    public Controller(MailRepository repository, MailModelAssembler assembler) {
         this.repository = repository;
+        this.assembler = assembler;
     }
-
-
     @GetMapping
-    public List<Mail> allMails() {
-        log.debug("All mails are called");
-        return repository.findAll();
-
-
+    public CollectionModel<EntityModel<Mail>> all() {
+        log.debug("All persons called");
+        return assembler.toCollectionModel(repository.findAll());
     }
 
+//    @GetMapping
+//    public List<Mail> allMails() {
+//        log.debug("All mails are called");
+//        return repository.findAll();
+//    }
     @GetMapping(value = "/{id}")
-    public ResponseEntity<Mail> oneMail(@PathVariable long id) {
-        var mailOptional = repository.findById(id);
-
-        return mailOptional.map(mail -> new ResponseEntity<>(mail, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<EntityModel<Mail>> one(@PathVariable long id) {
+        return repository.findById(id)
+                .map(assembler::toModel)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
+//    @GetMapping(value = "/{id}")
+//    public ResponseEntity<Mail> oneMail(@PathVariable long id) {
+//        var mailOptional = repository.findById(id);
+//
+//        return mailOptional.map(mail -> new ResponseEntity<>(mail, HttpStatus.OK))
+//                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+//    }
 
     @PostMapping
     public ResponseEntity<Mail> createMail(@RequestBody Mail mail) {
@@ -147,5 +158,4 @@ class Controller {
         javaMailSender.send(msg);
 
     }
-
 }
