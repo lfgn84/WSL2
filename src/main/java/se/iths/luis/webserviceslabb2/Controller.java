@@ -72,7 +72,7 @@ class Controller {
             repository.deleteById(id);
             return new ResponseEntity<>(HttpStatus.OK);
         } else
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
     }
 
     @PostMapping("/{id}")
@@ -82,7 +82,7 @@ class Controller {
         if(repository.getOne(id).getSent() == null)
             sendEmail(repository.getOne(id));
         else
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
 
         log.info("Mail with id = "+ id +" sent to e-mail adress = " + repository.getOne(id).getTo());
         return repository.findById(id)
@@ -113,7 +113,7 @@ class Controller {
                         new ResponseEntity<>(HttpStatus.NOT_FOUND));
                 }
         else{
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
         }
     }
 
@@ -138,7 +138,7 @@ class Controller {
                 .orElseGet(() ->
                         new ResponseEntity<>(HttpStatus.NOT_FOUND));}
         else{
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
         }
     }
 
