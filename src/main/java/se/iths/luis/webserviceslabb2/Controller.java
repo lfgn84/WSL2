@@ -12,7 +12,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
-import java.util.List;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
@@ -62,7 +61,7 @@ class Controller {
         var m = repository.save(mail);
         log.info("Saved to repository " + m);
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Location", "/api/mails/" + m.getId());
+        headers.setLocation(linkTo(Controller.class).slash(m.getId()).toUri());
         return new ResponseEntity<>(m, headers, HttpStatus.CREATED);
     }
 
@@ -83,7 +82,7 @@ class Controller {
         if(repository.getOne(id).getSent() == null)
             sendEmail(repository.getOne(id));
         else
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 
         log.info("Mail with id = "+ id +" sent to e-mail adress = " + repository.getOne(id).getTo());
         return repository.findById(id)
@@ -139,7 +138,7 @@ class Controller {
                 .orElseGet(() ->
                         new ResponseEntity<>(HttpStatus.NOT_FOUND));}
         else{
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -148,7 +147,6 @@ class Controller {
     private JavaMailSender javaMailSender;
 
     void sendEmail(Mail mail) {
-
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setTo(mail.getTo());
 
