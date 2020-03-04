@@ -18,20 +18,20 @@ import java.util.Date;
 @NoArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Mail {
-    @Id @GeneratedValue private long id;
+    @Id @GeneratedValue private Long id;
     private String to;
     private String subject;
     private String text;
     private Date sent;
 
-    public Mail(long id, String to, String subject, String text) {
+    public Mail(Long id, String to, String subject, String text) {
         this.id = id;
         this.to = to;
         this.subject = subject;
         this.text = text;
     }
 
-    public Mail(long id, String to, String subject, String text, Date sent) {
+    public Mail(Long id, String to, String subject, String text, Date sent) {
         this.id = id;
         this.to = to;
         this.subject = subject;

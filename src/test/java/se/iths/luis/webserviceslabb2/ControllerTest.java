@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -28,16 +29,19 @@ public class ControllerTest {
     MockMvc mockMvc;
 
     @MockBean
-    MailRepository mockRepository;
+    MailRepository repository;
+
+    @MockBean
+    JavaMailSender mailSender;
 
     @BeforeEach
     void setup(){
-        when(mockRepository.findAll()).thenReturn(List.of(new Mail(1L,"test@test.com","Test","Test1"),new Mail(2L,"test@test.com","Test","Test2")));
-        when(mockRepository.findById(1L)).thenReturn(Optional.of(new Mail(1L,"test@test.com","Test","Test1")));
-        when(mockRepository.save(any(Mail.class))).thenAnswer(invocationOnMock -> {
-           Object[] args = invocationOnMock.getArguments();
-           var m = (Mail) args[0];
-           return new Mail(1L,m.getTo(),m.getSubject(),m.getText());
+        when(repository.findAll()).thenReturn(List.of(new Mail(1L, "lfgn84@gmail.com","Test 1","Test Mail 1",null), new Mail(2L, "seventythree73@hotmail.com","Test 2","Test Mail 2",null)));
+        when(repository.findById(1L)).thenReturn(Optional.of(new Mail(1L, "lfgn84@gmail.com","Test 1","Test Mail 1",null)));
+        when(repository.save(any(Mail.class))).thenAnswer(invocationOnMock -> {
+            Object[] args = invocationOnMock.getArguments();
+            var m = (Mail) args[0];
+            return new Mail(0L, m.getTo(),m.getSubject(),m.getText());
         });
     }
 
@@ -47,8 +51,10 @@ public class ControllerTest {
                 get("/api/mails").contentType("application/hal+json"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("_embedded.mailList[0]._links.self.href", is("http://localhost/api/mails/1")))
-                .andExpect(jsonPath("_embedded.mailList[0].to", is("test@test.com")));
-        //Build json paths with: https://jsonpath.com/
+                .andExpect(jsonPath("_embedded.mailList[0].to", is("lfgn84@gmail.com")));
+              //  .andExpect(content().json("[{\"id\":1,\"to\":\"lfgn84@gmail.com\",\"subject\":\"Test 1\",\"text\":\"Test Mail 1\"},{\"id\":2,\"to\":\"seventythree73@hotmail.com\",\"subject\":\"Test 2\",\"text\":\"Test Mail 2\"}]"));
+
+
     }
 
     @Test
@@ -59,23 +65,18 @@ public class ControllerTest {
                 .andExpect(status().isOk())
                 //.andExpect(jsonPath("content[0].links[2].rel", is("self")))
                 .andExpect(jsonPath("_links.self.href", is("http://localhost/api/mails/1")));
+
     }
 
-    @Test
-    @DisplayName("Calls Get method with invalid id url /api/mails/3")
-    void getInvalidID() throws Exception {
-        mockMvc.perform(
-                get("/api/mails/3").accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
-    }
 
     @Test
     void getCreateMail() throws Exception {
         mockMvc.perform(
                 post("/api/mails/")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":0,\"to\":\"test@test.com\",\"subject\":\"Test\",\"text\":\"Test1\"}"))
+                        .content("{\"id\":0,\"to\":\"lfgn@gmail.com\",\"subject\":\"Test 3\",\"text\":\"Test Mail 3\",\"sent\": null}"))
                 .andExpect(status().isCreated());
+
     }
 
 
