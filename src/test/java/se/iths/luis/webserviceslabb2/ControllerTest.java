@@ -37,7 +37,7 @@ public class ControllerTest {
 
         when(repository.findAll()).thenReturn(List.of(new Mail(1L, "lfgn84@gmail.com","Test 1","Test Mail 1",null), new Mail(2L, "seventythree73@hotmail.com","Test 2","Test Mail 2",null)));
         when(repository.findById(1L)).thenReturn(Optional.of(new Mail(1L, "lfgn84@gmail.com","Test 1","Test Mail 1",null)));
-       when(repository.findById(2L)).thenReturn(Optional.of(new Mail(2L, "seventythree73@hotmail.com","Test 2","Test Mail 2",null)));
+        when(repository.findById(2L)).thenReturn(Optional.of(new Mail(2L, "seventythree73@hotmail.com","Test 2","Test Mail 2",null)));
         when(repository.save(any(Mail.class))).thenAnswer(invocationOnMock -> {
             Object[] args = invocationOnMock.getArguments();
             var m = (Mail) args[0];
@@ -53,7 +53,7 @@ public class ControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("_embedded.mailList[0]._links.self.href", is("http://localhost/api/mails/1")))
                 .andExpect(jsonPath("_embedded.mailList[0].to", is("lfgn84@gmail.com")));
-              //  .andExpect(content().json("[{\"id\":1,\"to\":\"lfgn84@gmail.com\",\"subject\":\"Test 1\",\"text\":\"Test Mail 1\"},{\"id\":2,\"to\":\"seventythree73@hotmail.com\",\"subject\":\"Test 2\",\"text\":\"Test Mail 2\"}]"));
+        //  .andExpect(content().json("[{\"id\":1,\"to\":\"lfgn84@gmail.com\",\"subject\":\"Test 1\",\"text\":\"Test Mail 1\"},{\"id\":2,\"to\":\"seventythree73@hotmail.com\",\"subject\":\"Test 2\",\"text\":\"Test Mail 2\"}]"));
 
 
     }
@@ -79,17 +79,24 @@ public class ControllerTest {
                 .andExpect(status().isCreated());
 
     }
- /*  @Test
+   @Test
     void editMail() throws Exception{
+        //repository.getOne(2L).getSent().equals(null);
         mockMvc.perform(
-                    patch("/api/mails/2")
-                       //     .param(repository.getOne(2L).setSent(null)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"id\":0,\"to\":\"lfgn84@gmail.com\",\"subject\":\"Test 2\",\"text\":\"Test edited Mail 2\",\"sent\": null}"))
-                    .andExpect(status().isOk());
+                patch("/api/mails/2")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\":0,\"to\":\"lfgn84@gmail.com\",\"subject\":\"Test 2\",\"text\":\"Test edited Mail 2\",\"sent\": null}"))
+                .andExpect(status().isOk());
 
     }
-*/
+
+    /*@Test
+    void replaceMail() throws Exception{
+        mockMvc.preform(
+                delete()
+        )
+    } */
+
 
 
 }

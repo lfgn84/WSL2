@@ -25,7 +25,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 @RequestMapping("/api/mails")
 @Slf4j
 class Controller {
-
+/*
     @Qualifier("eurekaClient")
     @Autowired
     private EurekaClient eurekaClient;
@@ -35,7 +35,7 @@ class Controller {
         Application application = eurekaClient.getApplication("MAIL-SENDER");
         return application.getInstances();
     }
-
+*/
     final MailRepository repository;
     private final MailModelAssembler assembler;
 
@@ -135,29 +135,30 @@ class Controller {
 
     @PatchMapping("/{id}")
     ResponseEntity<Mail> modifyMail(@RequestBody Mail newMail, @PathVariable Long id) {
-        if(repository.getOne(id).getSent() == null){
-        return repository.findById(id)
-                .map(mail -> {
-                    if (newMail.getTo() != null)
-                        mail.setTo(newMail.getTo());
-                    if(newMail.getSubject() != null)
-                        mail.setSubject(newMail.getSubject());
-                    if(newMail.getText() != null)
-                        mail.setText(newMail.getText());
 
-                    log.info("PATCH edited Mail " + mail);
-                    var m = repository.save(mail);
-                    log.info("Edited and saved to repository " +  m);
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.setLocation(linkTo(Controller.class).slash(mail.getId()).toUri());
-                    return new ResponseEntity<>(mail, headers, HttpStatus.OK);
-                    }
-                 )
-                .orElseGet(() ->
-                        new ResponseEntity<>(HttpStatus.NOT_FOUND));}
-        else{
-            return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+        var o = repository.findById(id);
+
+        if (o.isPresent() && o.get().getSent() == null) {
+            var mail = o.get();
+            if (mail.getSent() == null) {
+                if (newMail.getTo() != null)
+                    mail.setTo(newMail.getTo());
+                if (newMail.getSubject() != null)
+                    mail.setSubject(newMail.getSubject());
+                if (newMail.getText() != null)
+                    mail.setText(newMail.getText());
+
+                log.info("PATCH edited Mail " + mail);
+                var m = repository.save(mail);
+                log.info("Edited and saved to repository " + m);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setLocation(linkTo(Controller.class).slash(mail.getId()).toUri());
+                return new ResponseEntity<>(mail, headers, HttpStatus.OK);
+            }
+        } else if (o.isPresent() && o.get().getSent() != null){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+       return null;
     }
 
 
