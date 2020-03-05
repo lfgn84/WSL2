@@ -14,12 +14,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
 
 @WebMvcTest(Controller.class)
 @Import({MailModelAssembler.class})
@@ -36,13 +34,16 @@ public class ControllerTest {
 
     @BeforeEach
     void setup(){
+
         when(repository.findAll()).thenReturn(List.of(new Mail(1L, "lfgn84@gmail.com","Test 1","Test Mail 1",null), new Mail(2L, "seventythree73@hotmail.com","Test 2","Test Mail 2",null)));
         when(repository.findById(1L)).thenReturn(Optional.of(new Mail(1L, "lfgn84@gmail.com","Test 1","Test Mail 1",null)));
+       when(repository.findById(2L)).thenReturn(Optional.of(new Mail(2L, "seventythree73@hotmail.com","Test 2","Test Mail 2",null)));
         when(repository.save(any(Mail.class))).thenAnswer(invocationOnMock -> {
             Object[] args = invocationOnMock.getArguments();
             var m = (Mail) args[0];
-            return new Mail(0L, m.getTo(),m.getSubject(),m.getText());
+            return new Mail(0L, m.getTo(),m.getSubject(),m.getText(),m.getSent());
         });
+
     }
 
     @Test
@@ -74,10 +75,21 @@ public class ControllerTest {
         mockMvc.perform(
                 post("/api/mails/")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":0,\"to\":\"lfgn@gmail.com\",\"subject\":\"Test 3\",\"text\":\"Test Mail 3\",\"sent\": null}"))
+                        .content("{\"id\":0,\"to\":\"lfgn84@gmail.com\",\"subject\":\"Test 3\",\"text\":\"Test Mail 3\",\"sent\": null}"))
                 .andExpect(status().isCreated());
 
     }
+ /*  @Test
+    void editMail() throws Exception{
+        mockMvc.perform(
+                    patch("/api/mails/2")
+                       //     .param(repository.getOne(2L).setSent(null)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"id\":0,\"to\":\"lfgn84@gmail.com\",\"subject\":\"Test 2\",\"text\":\"Test edited Mail 2\",\"sent\": null}"))
+                    .andExpect(status().isOk());
+
+    }
+*/
 
 
 }

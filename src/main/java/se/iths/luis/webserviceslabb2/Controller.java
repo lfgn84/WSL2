@@ -1,7 +1,12 @@
 package se.iths.luis.webserviceslabb2;
 
+import com.netflix.appinfo.InstanceInfo;
+import com.netflix.discovery.EurekaClient;
+import com.netflix.discovery.shared.Application;
+import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +17,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.List;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
@@ -19,6 +25,16 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 @RequestMapping("/api/mails")
 @Slf4j
 class Controller {
+
+    @Qualifier("eurekaClient")
+    @Autowired
+    private EurekaClient eurekaClient;
+
+    @GetMapping("/clients")
+    public List<InstanceInfo> doRequest() {
+        Application application = eurekaClient.getApplication("MAIL-SENDER");
+        return application.getInstances();
+    }
 
     final MailRepository repository;
     private final MailModelAssembler assembler;
@@ -129,7 +145,9 @@ class Controller {
                     if(newMail.getText() != null)
                         mail.setText(newMail.getText());
 
-                    repository.save(mail);
+                    log.info("PATCH edited Mail " + mail);
+                    var m = repository.save(mail);
+                    log.info("Edited and saved to repository " +  m);
                     HttpHeaders headers = new HttpHeaders();
                     headers.setLocation(linkTo(Controller.class).slash(mail.getId()).toUri());
                     return new ResponseEntity<>(mail, headers, HttpStatus.OK);
