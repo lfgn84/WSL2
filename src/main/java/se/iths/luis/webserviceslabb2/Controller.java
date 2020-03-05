@@ -25,7 +25,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 @RequestMapping("/api/mails")
 @Slf4j
 class Controller {
-/*
+
     @Qualifier("eurekaClient")
     @Autowired
     private EurekaClient eurekaClient;
@@ -35,11 +35,9 @@ class Controller {
         Application application = eurekaClient.getApplication("MAIL-SENDER");
         return application.getInstances();
     }
-*/
+
     final MailRepository repository;
     private final MailModelAssembler assembler;
-
-    //  Mail mail1 = new Mail(1,"lfgn84@gmail.com","First mail", "This is the firs e-mail.");
 
     public Controller(MailRepository repository, MailModelAssembler assembler) {
         this.repository = repository;
@@ -51,11 +49,6 @@ class Controller {
         return assembler.toCollectionModel(repository.findAll());
     }
 
-//    @GetMapping
-//    public List<Mail> allMails() {
-//        log.debug("All mails are called");
-//        return repository.findAll();
-//    }
     @GetMapping(value = "/{id}")
     public ResponseEntity<EntityModel<Mail>> one(@PathVariable long id) {
         return repository.findById(id)
@@ -63,13 +56,6 @@ class Controller {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-//    @GetMapping(value = "/{id}")
-//    public ResponseEntity<Mail> oneMail(@PathVariable long id) {
-//        var mailOptional = repository.findById(id);
-//
-//        return mailOptional.map(mail -> new ResponseEntity<>(mail, HttpStatus.OK))
-//                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
-//    }
 
     @PostMapping
     public ResponseEntity<Mail> createMail(@RequestBody Mail mail) {
@@ -83,7 +69,8 @@ class Controller {
 
     @DeleteMapping("/{id}")
     ResponseEntity<?> deleteMail(@PathVariable Long id) {
-        if (repository.existsById(id) && ( repository.getOne(id).getSent() == null )) {
+        var o = repository.findById(id);
+        if (repository.existsById(id) && ( o.get().getSent() == null )) {
             log.info("Mail deleted");
             repository.deleteById(id);
             return new ResponseEntity<>(HttpStatus.OK);
@@ -95,12 +82,12 @@ class Controller {
     ResponseEntity<Mail> sendMail (@PathVariable Long id ){
         int i = id.intValue();
 
-        if(repository.getOne(id).getSent() == null)
-            sendEmail(repository.getOne(id));
+        if(repository.findById(id).get().getSent() == null)
+            sendEmail(repository.findById(id).get());
         else
             return new ResponseEntity<>(HttpStatus.CONFLICT);
 
-        log.info("Mail with id = "+ id +" sent to e-mail adress = " + repository.getOne(id).getTo());
+        log.info("Mail with id = "+ id +" sent to e-mail adress = " + repository.findById(id).get().getTo());
         return repository.findById(id)
                 .map(mail -> {
                     mail.setSent(new Date());
@@ -116,11 +103,14 @@ class Controller {
 
     @PutMapping("/{id}")
     ResponseEntity<Mail> replaceMail(@RequestBody Mail newMail, @PathVariable Long id) {
-        if(repository.getOne(id).getSent() == null){
+        if(repository.findById(id).get().getSent() == null){
+      //  if(repository.getOne(id).getSent() == null){
+        log.info("PUT replace Mail "+ newMail);
         return repository.findById(id)
                 .map(mail -> {
                     mail = newMail;
                     repository.save(mail);
+                    log.info("Mail saved "+ mail);
                     HttpHeaders headers = new HttpHeaders();
                     headers.setLocation(linkTo(Controller.class).slash(mail.getId()).toUri());
                     return new ResponseEntity<>(mail, headers, HttpStatus.OK);
