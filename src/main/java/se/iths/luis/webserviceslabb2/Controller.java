@@ -1,8 +1,8 @@
 package se.iths.luis.webserviceslabb2;
 
-import com.netflix.appinfo.InstanceInfo;
-import com.netflix.discovery.EurekaClient;
-import com.netflix.discovery.shared.Application;
+//import com.netflix.appinfo.InstanceInfo;
+//import com.netflix.discovery.EurekaClient;
+//import com.netflix.discovery.shared.Application;
 import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,23 +26,25 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 @Slf4j
 class Controller {
 
-    @Qualifier("eurekaClient")
-    @Autowired
-    private EurekaClient eurekaClient;
-
-    @GetMapping("/clients")
-    public List<InstanceInfo> doRequest() {
-        Application application = eurekaClient.getApplication("MAIL-SENDER");
-        return application.getInstances();
-    }
+//    @Qualifier("eurekaClient")
+//    @Autowired
+//    private EurekaClient eurekaClient;
+//
+//    @GetMapping("/clients")
+//    public List<InstanceInfo> doRequest() {
+//        Application application = eurekaClient.getApplication("MAIL-SENDER");
+//        return application.getInstances();
+//    }
 
     final MailRepository repository;
     private final MailModelAssembler assembler;
-
+    @Autowired
+    private JavaMailSender javaMailSender;
     public Controller(MailRepository repository, MailModelAssembler assembler) {
         this.repository = repository;
         this.assembler = assembler;
     }
+
     @GetMapping
     public CollectionModel<EntityModel<Mail>> all() {
         log.debug("All persons called");
@@ -71,7 +73,7 @@ class Controller {
     ResponseEntity<?> deleteMail(@PathVariable Long id) {
         var o = repository.findById(id);
         if (repository.existsById(id) && ( o.get().getSent() == null )) {
-            log.info("Mail deleted");
+            log.info("Mail with id = " + id + " deleted");
             repository.deleteById(id);
             return new ResponseEntity<>(HttpStatus.OK);
         } else
@@ -104,7 +106,6 @@ class Controller {
     @PutMapping("/{id}")
     ResponseEntity<Mail> replaceMail(@RequestBody Mail newMail, @PathVariable Long id) {
         if(repository.findById(id).get().getSent() == null){
-      //  if(repository.getOne(id).getSent() == null){
         log.info("PUT replace Mail "+ newMail);
         return repository.findById(id)
                 .map(mail -> {
@@ -150,10 +151,6 @@ class Controller {
         }
        return null;
     }
-
-
-    @Autowired
-    private JavaMailSender javaMailSender;
 
     void sendEmail(Mail mail) {
         SimpleMailMessage msg = new SimpleMailMessage();

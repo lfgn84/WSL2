@@ -62,7 +62,6 @@ public class ControllerTest {
     }
 
     @Test
-    @DisplayName("Calls Get method with url /api/mails/1")
     void getMailbyID() throws Exception {
         mockMvc.perform(
                 get("/api/mails/1").accept("application/hal+json"))
@@ -115,7 +114,7 @@ public class ControllerTest {
         mockMvc.perform(
                 post("/api/mails/2")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"id\":0,\"to\":\"lfgn84@gmail.com\",\"subject\":\"Test 2\",\"text\":\"Test edited Mail 2\",\"sent\":"+new Date() +"}"))
+                .content("{\"id\":0,\"to\":\"lfgn84@gmail.com\",\"subject\":\"Test 2\",\"text\":\"Test edited Mail 2\",\"sent\":"+ new Date() +"}"))
                 .andExpect(status().isOk());
     }
 
